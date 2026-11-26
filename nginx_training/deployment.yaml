@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Create at most 1 extra pod at a time
+      maxUnavailable: 0  # Keep all 5 pods available during the update
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        envFrom:
+        - secretRef:
+            name: nginx-secret
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html
+        - name: storage-volume
+          mountPath: /var/log/nginx
+      volumes:
+      - name: html-volume
+        configMap:
+          name: nginx-config
+      - name: storage-volume
+        persistentVolumeClaim:
+          claimName: nginx-pvc
